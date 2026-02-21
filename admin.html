@@ -62,7 +62,7 @@
 
 <script>
   // 請確認此 URL 與您的 GAS 佈署網址一致
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyXw6L_72xAE08U6-hRJm0S52cNCT4NliKGlAmRn5Ya361xfDGhG8d59jZmXqFNsNBt/exec";
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycby7pD3O3PgpIfwjjUHkY8L-Oyr5IadRA7YZ1NEDOZf35rejAfALmI8EoMuxyc8ush2gDw/exec";
 </script>
 
 <div id="login-view" class="fixed inset-0 bg-[#041c32] flex items-center justify-center z-[100] p-4">
@@ -260,12 +260,13 @@
     }
   }
 
+  // 修改：參考阿胖早點邏輯，修正單筆刪除的行號計算
   async function loadHistory() {
     const tbody = document.getElementById('history-tbody');
-    tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center">讀取中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-cyan-200">讀取中...</td></tr>';
     const res = await api({ action: "getOrderHistory" });
     if(res.ok) {
-      // 後端回傳的是 reverse 之後的資料，此處 i 為索引
+      const total = res.data.length;
       tbody.innerHTML = res.data.map((r, i) => {
         let statusText = "";
         let statusClass = "";
@@ -273,18 +274,20 @@
         else if (r.status === 'served') { statusText = "已送餐"; statusClass = "text-cyan-400 font-bold"; }
         else { statusText = "準備中"; statusClass = "text-emerald-400 font-bold"; }
 
-        // 注意：這裡假設後端有修正回傳 row 編號，若無，建議參考前面提示更新 getOrderHistory 函式
-        const rowId = r.row || (res.data.length - i + 1); 
+        // 使用與阿胖早點相同的行號計算邏輯：總筆數 - 目前索引 + 1 (因為資料是反轉過的)
+        const calcRow = total - i + 1;
 
         return `
-        <tr class="hover:bg-white/5">
+        <tr class="hover:bg-white/5 border-b border-white/5">
           <td class="px-4 py-4 text-xs text-gray-400">${new Date(r.time).toLocaleString()}</td>
           <td class="px-4 py-4 font-bold text-white">${r.table}</td>
           <td class="px-4 py-4 text-gray-200">${r.name} x ${r.qty}</td>
           <td class="px-4 py-4 font-bold text-cyan-400">$${r.subtotal}</td>
           <td class="px-4 py-4"><span class="${statusClass}">${statusText}</span></td>
-          <td class="px-4 py-4">
-            <button onclick="reqAuth('deleteOrder', ${rowId})" class="text-gray-500 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>
+          <td class="px-4 py-4 text-center">
+            <button onclick="reqAuth('deleteOrder', ${calcRow})" class="text-gray-500 hover:text-red-400 transition-colors">
+              <i class="fas fa-trash-alt"></i>
+            </button>
           </td>
         </tr>`;
       }).join('');
@@ -293,14 +296,14 @@
 
   async function loadAdminMenu() {
     const tbody = document.getElementById('admin-menu-tbody');
-    tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center">菜單載入中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-cyan-200">菜單載入中...</td></tr>';
     try {
       const resp = await fetch(`${GAS_API_URL}?action=getMenu`);
       const res = await resp.json();
       if(res.ok) {
         menuData = res.data;
         tbody.innerHTML = res.data.map(m => `
-          <tr class="hover:bg-white/5">
+          <tr class="hover:bg-white/5 border-b border-white/5">
             <td class="px-4 py-4 font-bold text-cyan-400">${m.category}</td>
             <td class="px-4 py-4 font-black text-white">${m.name}</td>
             <td class="px-4 py-4 text-gray-400 text-xs">${m.desc}</td>
@@ -345,7 +348,7 @@
     reqAuth(tempMenuData.row ? 'editMenu' : 'addMenu');
   }
 
-  // 修正後的驗證與執行函式
+  // 修改：整合阿胖早點的驗證與執行邏輯
   function reqAuth(type, row) {
     const modal = document.getElementById('modal-auth');
     modal.classList.add('modal-active');
@@ -353,7 +356,7 @@
     
     document.getElementById('btn-auth-confirm').onclick = async () => {
       const pwd = document.getElementById('input-auth-pwd').value;
-      let payload = { password: pwd }; 
+      let payload = { action: "", password: pwd }; 
 
       if (type === 'deleteAll') {
         payload.action = "deleteAllOrders";
@@ -363,6 +366,7 @@
         payload.row = row; 
       }
       else if (type === 'deleteOrder') { 
+        // 關鍵：將 targetSheet 設為 order，呼叫 deleteMenuItem 動作
         payload.action = "deleteMenuItem";
         payload.row = row; 
         payload.targetSheet = "order"; 
@@ -379,7 +383,8 @@
         alert('執行成功');
         closeModal('modal-auth');
         closeModal('modal-menu-edit');
-        if(type.includes('Menu')) loadAdminMenu(); else { loadHistory(); loadData(); }
+        if(type.includes('Menu')) loadAdminMenu(); 
+        else { loadHistory(); loadData(); }
       } else {
         alert(res.message || "驗證失敗或執行錯誤");
       }
