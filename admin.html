@@ -14,10 +14,9 @@
       background: linear-gradient(135deg, #041c32, #04293a, #064663);
       background-attachment: fixed;
       color: #e8f6ff;
-      min-height: 100-screen;
+      min-height: 100vh;
     }
 
-    /* 毛玻璃效果卡片 */
     .glass-card {
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(12px);
@@ -26,7 +25,6 @@
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
-    /* 導覽列 Active 狀態 */
     .nav-btn.active { 
       background: linear-gradient(135deg, #0077b6, #00b4d8);
       color: white; 
@@ -38,7 +36,6 @@
       transition: all 0.3s ease;
     }
 
-    /* 表格美化 */
     table th {
       background: rgba(0, 119, 182, 0.3) !important;
       color: #90e0ef;
@@ -48,7 +45,6 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* 輸入框美化 */
     input, select {
       background: rgba(255, 255, 255, 0.08) !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -57,7 +53,6 @@
 
     .modal-active { opacity: 1; pointer-events: auto; }
 
-    /* 客製化捲軸 */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #02141f; }
     ::-webkit-scrollbar-thumb { background: #0a4d68; border-radius: 4px; }
@@ -66,6 +61,7 @@
 <body>
 
 <script>
+  // 請確認此 URL 與您的 GAS 佈署網址一致
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyXw6L_72xAE08U6-hRJm0S52cNCT4NliKGlAmRn5Ya361xfDGhG8d59jZmXqFNsNBt/exec";
 </script>
 
@@ -269,13 +265,16 @@
     tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center">讀取中...</td></tr>';
     const res = await api({ action: "getOrderHistory" });
     if(res.ok) {
-      const total = res.data.length;
+      // 後端回傳的是 reverse 之後的資料，此處 i 為索引
       tbody.innerHTML = res.data.map((r, i) => {
         let statusText = "";
         let statusClass = "";
         if (r.status === 'completed') { statusText = "已結單"; statusClass = "text-gray-500"; }
         else if (r.status === 'served') { statusText = "已送餐"; statusClass = "text-cyan-400 font-bold"; }
         else { statusText = "準備中"; statusClass = "text-emerald-400 font-bold"; }
+
+        // 注意：這裡假設後端有修正回傳 row 編號，若無，建議參考前面提示更新 getOrderHistory 函式
+        const rowId = r.row || (res.data.length - i + 1); 
 
         return `
         <tr class="hover:bg-white/5">
@@ -285,7 +284,7 @@
           <td class="px-4 py-4 font-bold text-cyan-400">$${r.subtotal}</td>
           <td class="px-4 py-4"><span class="${statusClass}">${statusText}</span></td>
           <td class="px-4 py-4">
-            <button onclick="reqAuth('deleteOrder', ${total - i + 1})" class="text-gray-500 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>
+            <button onclick="reqAuth('deleteOrder', ${rowId})" class="text-gray-500 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>
           </td>
         </tr>`;
       }).join('');
@@ -346,22 +345,34 @@
     reqAuth(tempMenuData.row ? 'editMenu' : 'addMenu');
   }
 
+  // 修正後的驗證與執行函式
   function reqAuth(type, row) {
     const modal = document.getElementById('modal-auth');
     modal.classList.add('modal-active');
     document.getElementById('input-auth-pwd').value = "";
+    
     document.getElementById('btn-auth-confirm').onclick = async () => {
       const pwd = document.getElementById('input-auth-pwd').value;
-      let payload = { action: "", password: pwd };
-      if (type === 'deleteAll') payload.action = "deleteAllOrders";
-      else if (type === 'deleteMenu') { payload.action = "deleteMenuItem"; payload.row = row; }
+      let payload = { password: pwd }; 
+
+      if (type === 'deleteAll') {
+        payload.action = "deleteAllOrders";
+      } 
+      else if (type === 'deleteMenu') { 
+        payload.action = "deleteMenuItem"; 
+        payload.row = row; 
+      }
       else if (type === 'deleteOrder') { 
         payload.action = "deleteMenuItem";
         payload.row = row; 
         payload.targetSheet = "order"; 
       }
-      else if (type === 'addMenu') { payload = { ...payload, ...tempMenuData, action: "addMenuItem" }; }
-      else if (type === 'editMenu') { payload = { ...payload, ...tempMenuData, action: "editMenuItem" }; }
+      else if (type === 'addMenu') { 
+        payload = { ...payload, ...tempMenuData, action: "addMenuItem" }; 
+      }
+      else if (type === 'editMenu') { 
+        payload = { ...payload, ...tempMenuData, action: "editMenuItem" }; 
+      }
       
       const res = await api(payload);
       if(res.ok) {
@@ -370,7 +381,7 @@
         closeModal('modal-menu-edit');
         if(type.includes('Menu')) loadAdminMenu(); else { loadHistory(); loadData(); }
       } else {
-        alert(res.message);
+        alert(res.message || "驗證失敗或執行錯誤");
       }
     };
   }
