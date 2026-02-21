@@ -91,9 +91,10 @@ body{
 </div>
 </header>
 
-<!-- 公告 -->
-<div class="bg-white/60 backdrop-blur text-center py-3 font-bold text-sky-800">
-<span id="marquee-info">歡迎光臨鬼頭刀魚料理專門店 🐟</span>
+<div class="bg-transparent backdrop-blur text-center py-3 font-bold text-sky-800">
+  <marquee id="marquee-info" behavior="scroll" direction="left" scrollamount="6" class="max-w-4xl mx-auto block">
+    正在載入最新公告... 🐟
+  </marquee>
 </div>
 
 <nav id="category-nav" class="sticky top-[78px] bg-white/70 backdrop-blur border-b overflow-x-auto whitespace-nowrap z-40 px-4 py-3 flex gap-2">
@@ -109,7 +110,6 @@ body{
 <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 </main>
 
-<!-- 購物車 -->
 <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-[60] flex flex-col">
 <div class="p-4 border-b flex justify-between items-center bg-sky-700 text-white">
 <h3 class="font-bold text-xl">🧺 已選海味</h3>
@@ -154,6 +154,20 @@ renderCats();
 displayMenu('all');
 document.getElementById('loading-spinner').style.display='none';
 }
+}
+
+// 新增：向 GAS 取得 C2 欄位的公告資訊
+async function fetchConfig() {
+  try {
+    const res = await fetch(`${GAS_API_URL}?action=getConfig`);
+    const result = await res.json();
+    if (result.ok && result.marqueeText) {
+      document.getElementById('marquee-info').innerText = result.marqueeText;
+    }
+  } catch (e) {
+    console.error("無法取得公告資料", e);
+    document.getElementById('marquee-info').innerText = "歡迎光臨鬼頭刀魚料理專門店 🐟";
+  }
 }
 
 function renderCats(){
@@ -269,6 +283,7 @@ window.onload=()=>{
 TABLE_NO=new URLSearchParams(window.location.search).get('table')||"";
 document.getElementById('table-no').innerText=TABLE_NO||"體驗桌";
 fetchMenu();
+fetchConfig(); // 載入時執行公告抓取
 };
 </script>
 </body>
