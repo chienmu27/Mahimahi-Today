@@ -1,440 +1,365 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>好漁日｜深海藍管理系統</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-    body { 
-      font-family: 'Noto Sans TC', sans-serif; 
-      background: linear-gradient(135deg, #041c32, #04293a, #064663);
-      background-attachment: fixed;
-      color: #e8f6ff;
-      min-height: 100vh;
-    }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-    }
-    .nav-btn.active { 
-      background: linear-gradient(135deg, #0077b6, #00b4d8);
-      color: white; 
-      box-shadow: 0 4px 15px rgba(0, 180, 216, 0.4);
-    }
-    .nav-btn { color: #a9d6e5; transition: all 0.3s ease; }
-    
-    .modal-active { opacity: 1; pointer-events: auto; }
-    
-    table th { background: rgba(0, 119, 182, 0.3) !important; color: #90e0ef; text-transform: uppercase; font-size: 0.85rem;}
-    table td { border-bottom: 1px solid rgba(255,255,255,0.05); }
-    table tr:hover { background-color: rgba(255,255,255,0.05); }
-    
-    input { 
-      background: rgba(0, 0, 0, 0.3) !important; 
-      border: 1px solid rgba(255, 255, 255, 0.2) !important; 
-      color: white !important; 
-      border-radius: 8px;
-    }
-    input:focus { border-color: #00b4d8 !important; outline: none; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>好漁日｜深海藍管理系統</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+body { 
+  font-family: 'Noto Sans TC', sans-serif; 
+  background: linear-gradient(135deg, #041c32, #04293a, #064663);
+  background-attachment: fixed;
+  color: #e8f6ff;
+  min-height: 100vh;
+}
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+}
+.nav-btn.active { 
+  background: linear-gradient(135deg, #0077b6, #00b4d8);
+  color: white; 
+  box-shadow: 0 4px 15px rgba(0, 180, 216, 0.4);
+}
+.nav-btn { color: #a9d6e5; transition: all 0.3s ease; }
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  padding: 20px;
+  border-radius: 16px;
+  min-width: 300px;
+  color: #e8f6ff;
+}
+
+.card-served {
+  background: rgba(0,119,182,0.2);
+  border: 2px solid #00b4d8;
+}
+.card-normal {
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1);
+}
+
+table th { background: rgba(0, 119, 182, 0.3) !important; color: #90e0ef; text-transform: uppercase; font-size: 0.85rem;}
+table td { border-bottom: 1px solid rgba(255,255,255,0.05); }
+table tr:hover { background-color: rgba(255,255,255,0.05); }
+
+input { 
+  background: rgba(0, 0, 0, 0.3) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.2) !important; 
+  color: white !important; 
+  border-radius: 8px;
+}
+input:focus { border-color: #00b4d8 !important; outline: none; }
+</style>
 </head>
-<body class="bg-gray-900">
+<body>
 
 <script>
-  // ★★★ 請確認此處為最新的 GAS 網址 ★★★
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyXw6L_72xAE08U6-hRJm0S52cNCT4NliKGlAmRn5Ya361xfDGhG8d59jZmXqFNsNBt/exec";
+const GAS_API_URL="https://script.google.com/macros/s/AKfycbzRPw--Hr3zzmySCk5vZH4Ksc94oYmvapia87vUhvloDb0jE2OB-Qhvp5vCPHvV9A2P/exec";
+let PASSWORD="";
+let editRow=null;
+let refreshTimer=null;
+let processingTables={};
 </script>
 
-<!-- 登入畫面 -->
-<div id="login-view" class="fixed inset-0 bg-[#041c32] flex items-center justify-center z-[100] p-4">
-  <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl">
-    <div class="text-4xl mb-2">🌊</div>
-    <div class="text-3xl font-black text-[#00b4d8] mb-6">好漁日管理系統</div>
-    <input id="login-pwd" type="password" class="w-full px-4 py-4 mb-4 text-center text-2xl tracking-widest" placeholder="請輸入管理密碼" />
-    <button onclick="login()" class="w-full bg-gradient-to-r from-[#0077b6] to-[#00b4d8] text-white font-bold py-4 rounded-2xl text-xl hover:opacity-90 transition-all shadow-lg shadow-cyan-500/30">登入系統</button>
-    <div id="login-msg" class="text-center text-red-400 mt-4 font-bold"></div>
+<!-- 登入 -->
+<div id="login" class="fixed inset-0 bg-blue-900 flex items-center justify-center">
+  <div class="bg-glass-card p-8 rounded-2xl w-80">
+    <h2 class="text-xl font-bold text-center mb-4">管理登入</h2>
+    <input id="pwd" type="password" class="w-full border p-2 mb-4 rounded" onkeypress="if(event.key==='Enter'){login();}">
+    <button onclick="login()" class="w-full bg-gradient-to-r from-blue-700 to-sky-500 text-white p-2 rounded">登入</button>
+    <div id="msg" class="text-red-500 text-center mt-2"></div>
   </div>
 </div>
 
-<!-- 後台主畫面 -->
-<div id="admin-view" class="hidden">
-  <header class="bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between py-4 gap-4">
-      <h1 class="text-2xl font-black text-[#caf0f8] tracking-tighter">🌊 好漁日｜專業後台</h1>
-      <nav class="flex bg-black/20 p-1 rounded-xl">
-        <button onclick="switchTab('orders')" id="tab-orders" class="nav-btn active px-4 py-2 rounded-lg font-bold text-sm">訂單管理</button>
-        <button onclick="switchTab('history')" id="tab-history" class="nav-btn px-4 py-2 rounded-lg font-bold text-sm">訂單總表</button>
-        <button onclick="switchTab('menu')" id="tab-menu" class="nav-btn px-4 py-2 rounded-lg font-bold text-sm">菜單管理</button>
-      </nav>
-      <button onclick="logout()" class="bg-white/10 hover:bg-red-500/20 px-4 py-2 rounded-lg text-sm text-gray-300 transition">登出</button>
-    </div>
-  </header>
+<div id="admin" class="hidden">
 
-  <main class="max-w-6xl mx-auto p-4 md:p-6">
-    <!-- 1. 訂單管理 -->
-    <section id="view-orders" class="tab-content">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-[#90e0ef]"><i class="fas fa-fish mr-2"></i>即時訂單</h2>
-        <button onclick="loadData()" class="bg-[#0077b6] px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-[#0096c7] text-white">刷新數據</button>
-      </div>
-      <div id="tables-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-    </section>
+<header class="bg-gradient-to-r from-blue-800 to-sky-700 text-white p-4 flex justify-between glass-card shadow-lg">
+<h1 class="text-lg font-bold">好漁日｜深海藍管理系統</h1>
+<div class="flex gap-2">
+<button id="btn-orders" onclick="switchTab('orders')" class="nav-btn active">訂單管理</button>
+<button id="btn-history" onclick="switchTab('history')" class="nav-btn">訂單總表</button>
+<button id="btn-menu" onclick="switchTab('menu')" class="nav-btn">菜單管理</button>
+</div>
+</header>
 
-    <!-- 2. 訂單總表 -->
-    <section id="view-history" class="tab-content hidden">
-      <div class="glass-card p-6">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <h2 class="text-xl font-bold text-[#90e0ef]">所有紀錄 (最新的在前)</h2>
-          <button onclick="prepAuth('deleteAllOrders')" class="bg-red-500/20 text-red-300 px-4 py-2 rounded-xl font-bold border border-red-500/30 hover:bg-red-600 hover:text-white transition-all">
-            <i class="fas fa-trash-alt mr-2"></i>清空試算表資料
-          </button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left">
-            <thead>
-              <tr>
-                <th class="px-4 py-4 rounded-tl-lg">時間</th>
-                <th class="px-4 py-4">桌號</th>
-                <th class="px-4 py-4">品項</th>
-                <th class="px-4 py-4">金額</th>
-                <th class="px-4 py-4">狀態</th>
-                <th class="px-4 py-4 rounded-tr-lg text-center">操作</th>
-              </tr>
-            </thead>
-            <tbody id="history-tbody" class="text-sm"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+<div class="p-6">
 
-    <!-- 3. 菜單管理 -->
-    <section id="view-menu" class="tab-content hidden">
-      <div class="glass-card p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-[#90e0ef]">菜單品項設定</h2>
-          <button onclick="openMenuModal('add')" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:bg-emerald-500 transition-all btn-action">
-            <i class="fas fa-plus mr-2"></i>新增品項
-          </button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left">
-            <thead>
-              <tr>
-                <th class="px-4 py-4 rounded-tl-lg">分類</th>
-                <th class="px-4 py-4">名稱</th>
-                <th class="px-4 py-4">描述</th>
-                <th class="px-4 py-4">價格</th>
-                <th class="px-4 py-4 text-center rounded-tr-lg">操作</th>
-              </tr>
-            </thead>
-            <tbody id="admin-menu-tbody" class="text-sm text-gray-200"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
+<!-- 訂單管理 -->
+<section id="orders">
+<div class="flex justify-between mb-4">
+<h2 class="font-bold text-lg">即時訂單</h2>
+<button onclick="loadOrderCards()" class="bg-gradient-to-r from-blue-700 to-sky-500 px-3 py-1 rounded">手動刷新</button>
+</div>
+<div id="orderCards" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</section>
+
+<!-- 訂單總表 -->
+<section id="history" class="hidden">
+<div class="flex justify-end mb-2">
+<button onclick="clearAllOrders()" class="bg-red-600 text-white px-3 py-1 rounded">全部刪除</button>
+</div>
+<table class="w-full glass-card shadow rounded">
+<thead>
+<tr>
+<th>日期時間</th>
+<th>品項</th>
+<th>單價</th>
+<th>數量</th>
+<th>小計</th>
+<th>桌號</th>
+<th>狀態</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="orderBody"></tbody>
+</table>
+</section>
+
+<!-- 菜單管理 -->
+<section id="menu" class="hidden">
+<button onclick="addMenu()" class="mb-3 bg-green-600 text-white px-3 py-1 rounded">新增</button>
+<table class="w-full glass-card shadow rounded">
+<thead>
+<tr><th>分類</th><th>名稱</th><th>描述</th><th>價格</th><th>操作</th></tr>
+</thead>
+<tbody id="menuBody"></tbody>
+</table>
+</section>
+
+</div>
 </div>
 
-<!-- 驗證彈窗 -->
-<div id="modal-auth" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] opacity-0 pointer-events-none transition-all backdrop-blur-sm">
-  <div class="glass-card p-8 max-w-sm w-full mx-4 border-cyan-500/30 shadow-2xl">
-    <h3 id="auth-title" class="text-xl font-black mb-2 text-cyan-400">權限確認</h3>
-    <p id="auth-desc" class="text-gray-400 mb-6 text-sm">此操作需要驗證，請輸入密碼</p>
-    <input id="input-auth-pwd" type="password" class="w-full px-4 py-3 mb-4 text-center text-xl tracking-widest" placeholder="驗證碼" />
-    <div class="flex gap-2">
-      <button onclick="closeModal('modal-auth')" class="flex-1 bg-white/10 py-3 rounded-xl font-bold hover:bg-white/20">取消</button>
-      <button onclick="submitAuth()" id="btn-auth-confirm" class="flex-1 bg-gradient-to-r from-red-600 to-red-500 text-white py-3 rounded-xl font-bold shadow-lg">確認</button>
-    </div>
-  </div>
+<!-- 編輯彈窗 -->
+<div id="editModal" class="modal-bg hidden">
+<div class="modal">
+<h3 class="text-lg font-bold mb-2">編輯菜單</h3>
+<table class="w-full mb-3">
+<tr><td>分類</td><td><input id="modalCategory" class="border p-1 w-full"></td></tr>
+<tr><td>名稱</td><td><input id="modalName" class="border p-1 w-full"></td></tr>
+<tr><td>描述</td><td><input id="modalDesc" class="border p-1 w-full"></td></tr>
+<tr><td>價格</td><td><input id="modalPrice" type="number" class="border p-1 w-full"></td></tr>
+</table>
+<div class="flex justify-end gap-2">
+<button onclick="confirmEdit()" class="bg-green-600 text-white px-3 py-1 rounded">確認</button>
+<button onclick="cancelEdit()" class="bg-gray-400 text-white px-3 py-1 rounded">取消</button>
 </div>
-
-<!-- 菜單編輯/新增彈窗 -->
-<div id="modal-menu-edit" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] opacity-0 pointer-events-none transition-all backdrop-blur-sm">
-  <div class="glass-card p-8 max-w-md w-full mx-4 shadow-2xl border-cyan-500/30">
-    <h3 id="menu-modal-title" class="text-xl font-black mb-6 text-cyan-400">編輯品項</h3>
-    <input type="hidden" id="menu-row-id" />
-    <div class="space-y-4">
-      <div><label class="text-xs font-bold text-gray-400 mb-1 block">分類</label><input id="menu-cat" type="text" class="w-full p-2" placeholder="例如：主餐" /></div>
-      <div><label class="text-xs font-bold text-gray-400 mb-1 block">名稱</label><input id="menu-name" type="text" class="w-full p-2" placeholder="餐點名稱" /></div>
-      <div><label class="text-xs font-bold text-gray-400 mb-1 block">描述</label><input id="menu-desc" type="text" class="w-full p-2" placeholder="描述（可選）" /></div>
-      <div><label class="text-xs font-bold text-gray-400 mb-1 block">單價</label><input id="menu-price" type="number" class="w-full p-2" placeholder="0" /></div>
-    </div>
-    <div class="flex gap-2 mt-8">
-      <button onclick="closeModal('modal-menu-edit')" class="flex-1 bg-white/10 py-3 rounded-xl font-bold hover:bg-white/20">取消</button>
-      <button onclick="prepAuth('saveMenu')" class="flex-1 bg-gradient-to-r from-[#0077b6] to-[#00b4d8] text-white py-3 rounded-xl font-bold shadow-lg">下一步 (驗證)</button>
-    </div>
-  </div>
+</div>
 </div>
 
 <script>
-  let SESSION_TOKEN = "";
-  let menuData = [];
-  let tableButtonState = {};
-  
-  // 重要：儲存當前待執行的任務
-  let PENDING_TASK = null; 
-  // 格式: { type: 'deleteOrder', id: 123 } 或 { type: 'saveMenu' }
 
-  async function api(payload){
-    if(SESSION_TOKEN && !payload.password) payload.token = SESSION_TOKEN;
-    try {
-      const res = await fetch(GAS_API_URL, {
-        method: "POST",
-        mode: "cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      return await res.json();
-    } catch (e) {
-      console.error(e);
-      return { ok: false, message: "連線失敗，請檢查網路" };
+// API
+async function api(payload){
+  payload.password=PASSWORD;
+  const res=await fetch(GAS_API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"text/plain"},
+    body:JSON.stringify(payload)
+  });
+  return await res.json();
+}
+
+// 登入
+async function login(){
+  PASSWORD=document.getElementById("pwd").value;
+  const res=await api({action:"adminLogin"});
+  if(res.ok){
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("admin").classList.remove("hidden");
+    startAutoRefresh();
+    loadOrderCards();
+  }else{
+    document.getElementById("msg").innerText="密碼錯誤";
+  }
+}
+
+// 分頁
+function switchTab(tab){
+  ["orders","history","menu"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
+    document.getElementById("btn-"+t).classList.remove("active");
+  });
+  document.getElementById(tab).classList.remove("hidden");
+  document.getElementById("btn-"+tab).classList.add("active");
+
+  if(tab==="orders"){ startAutoRefresh(); loadOrderCards(); }
+  else{ stopAutoRefresh(); }
+
+  if(tab==="history") loadOrders();
+  if(tab==="menu") loadMenu();
+}
+
+// 自動刷新
+function startAutoRefresh(){
+  stopAutoRefresh();
+  refreshTimer=setInterval(loadOrderCards,10000);
+}
+function stopAutoRefresh(){
+  if(refreshTimer) clearInterval(refreshTimer);
+}
+
+// 訂單管理
+async function loadOrderCards(){
+  const res=await api({action:"getOrderHistory"});
+  if(!res.ok) return;
+
+  const grouped={};
+
+  res.data.forEach(r=>{
+    if(r.status==="completed") return;
+    if(!grouped[r.table]) grouped[r.table]={items:[],status:r.status};
+    grouped[r.table].items.push(r);
+  });
+
+  const tables=Object.keys(grouped).sort((a,b)=>Number(a)-Number(b));
+  const root=document.getElementById("orderCards");
+  root.innerHTML="";
+
+  tables.forEach(table=>{
+    const data=grouped[table];
+    const total=data.items.reduce((s,i)=>s+Number(i.subtotal),0);
+    const isServed=data.status==="served";
+    const btnText=isServed?"💰 結帳":"🚚 送餐";
+    const newStatus=isServed?"completed":"served";
+    const cardClass=isServed?"card-served":"card-normal";
+
+    root.innerHTML+=`
+    <div class="${cardClass} p-4 rounded shadow">
+      <div class="flex justify-between mb-2">
+        <h3 class="font-bold text-lg">桌號 ${table}</h3>
+        <button id="btn-${table}" 
+        onclick="handleStatus('${table}','${newStatus}',${total})"
+        class="bg-${isServed?'blue':'green'}-600 text-white px-3 py-1 rounded">
+        ${btnText}
+        </button>
+      </div>
+      ${data.items.map(i=>`
+        <div class="flex justify-between text-sm">
+          <span>${i.name} x ${i.qty}</span>
+          <span>$${i.subtotal}</span>
+        </div>`).join("")}
+      <div class="text-right font-bold text-red-600 mt-2">總計 $${total}</div>
+    </div>`;
+  });
+}
+
+// 狀態處理
+async function handleStatus(table,newStatus,total){
+
+  if(processingTables[table]) return;
+  processingTables[table]=true;
+
+  if(newStatus==="completed"){
+    if(!confirm(`確定結帳？\n桌號 ${table}\n金額 $${total}`)){
+      processingTables[table]=false;
+      return;
     }
   }
 
-  async function login(){
-    const pwd = document.getElementById("login-pwd").value.trim();
-    if(!pwd) return alert("請輸入密碼");
-    const data = await api({ action:"adminLogin", password: pwd });
-    if(data && data.ok){
-      SESSION_TOKEN = pwd;
-      document.getElementById("login-view").classList.add("hidden");
-      document.getElementById("admin-view").classList.remove("hidden");
-      loadData();
-    } else {
-      document.getElementById("login-msg").innerText = "密碼錯誤";
-    }
-  }
-  
-  function logout() {
-    location.reload();
+  document.getElementById("btn-"+table).disabled=true;
+
+  const res=await api({action:"getOrderHistory"});
+  const rows=res.data.filter(r=>r.table==table && r.status!=="completed");
+
+  for(const r of rows){
+    if(newStatus==="served" && r.status==="completed") continue;
+    await api({action:"editOrderStatus",row:r.row,status:newStatus});
   }
 
-  function switchTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.getElementById('view-' + tabId).classList.remove('hidden');
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
-    
-    if(tabId === 'history') loadHistory();
-    else if(tabId === 'menu') loadAdminMenu();
-    else if(tabId === 'orders') loadData();
-  }
+  processingTables[table]=false;
+  loadOrderCards();
+  loadOrders();
+}
 
-  // ================= 統一驗證流程 =================
-  
-  // 1. 準備任務，開啟視窗
-  function prepAuth(taskType, dataId = null) {
-    PENDING_TASK = { type: taskType, id: dataId };
-    
-    const modal = document.getElementById('modal-auth');
-    const input = document.getElementById('input-auth-pwd');
-    const title = document.getElementById('auth-title');
-    
-    input.value = "";
-    modal.classList.add('modal-active');
-    input.focus();
-    
-    // 設定標題
-    if(taskType === 'deleteOrder') title.innerText = "確認刪除訂單";
-    else if(taskType === 'deleteMenu') title.innerText = "確認刪除菜單";
-    else if(taskType === 'saveMenu') title.innerText = "確認儲存菜單";
-    else if(taskType === 'deleteAllOrders') title.innerText = "危險：清空所有訂單";
-  }
-  
-  // 2. 提交驗證，執行任務
-  async function submitAuth() {
-    const pwd = document.getElementById('input-auth-pwd').value.trim();
-    if(!pwd && !SESSION_TOKEN) return alert("請輸入密碼");
-    
-    const btn = document.getElementById('btn-auth-confirm');
-    btn.disabled = true;
-    btn.innerText = "處理中...";
-    
-    let result = { ok: false, message: "未知錯誤" };
-    const task = PENDING_TASK;
-    
-    try {
-        if (task.type === 'deleteOrder') {
-            // 刪除訂單：必須指定 targetSheet 為 order
-            result = await api({ 
-                action: "deleteMenuItem", 
-                row: Number(task.id), 
-                targetSheet: "order", 
-                password: pwd 
-            });
-        } 
-        else if (task.type === 'deleteMenu') {
-            // 刪除菜單
-            result = await api({ 
-                action: "deleteMenuItem", 
-                row: Number(task.id), 
-                targetSheet: "menu", 
-                password: pwd 
-            });
-        }
-        else if (task.type === 'saveMenu') {
-            // 儲存菜單 (新增或編輯)
-            const rowId = document.getElementById('menu-row-id').value;
-            const payload = {
-                action: rowId ? "editMenuItem" : "addMenuItem",
-                row: rowId ? Number(rowId) : 0,
-                category: document.getElementById('menu-cat').value,
-                name: document.getElementById('menu-name').value,
-                desc: document.getElementById('menu-desc').value,
-                price: Number(document.getElementById('menu-price').value),
-                password: pwd,
-                targetSheet: "menu"
-            };
-            if(!payload.name || !payload.price) throw new Error("名稱與價格為必填");
-            result = await api(payload);
-        }
-        else if (task.type === 'deleteAllOrders') {
-            if(confirm("確定要清空所有資料嗎？此動作無法復原。")) {
-                result = await api({ action: "deleteAllOrders", password: pwd });
-            } else {
-                result = { ok: false, message: "已取消" };
-            }
-        }
-    } catch(err) {
-        result = { ok: false, message: err.message };
-    }
-    
-    btn.disabled = false;
-    btn.innerText = "確認";
-    
-    if(result.ok) {
-        alert("執行成功");
-        closeModal('modal-auth');
-        closeModal('modal-menu-edit');
-        // 根據任務類型重新整理頁面
-        if(task.type.includes('Menu')) loadAdminMenu();
-        else if(task.type.includes('Order')) loadHistory();
-    } else {
-        alert("失敗: " + result.message);
-    }
-  }
+// 訂單總表
+async function loadOrders(){
+  const res=await api({action:"getOrderHistory"});
+  if(!res.ok)return;
+  document.getElementById("orderBody").innerHTML=res.data.map(r=>`
+<tr>
+<td>${new Date(r.time).toLocaleString()}</td>
+<td>${r.name}</td>
+<td>${r.price}</td>
+<td>${r.qty}</td>
+<td>${r.subtotal}</td>
+<td>${r.table}</td>
+<td>${r.status}</td>
+<td><button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteOrder(${r.row})">刪除</button></td>
+</tr>`).join("");
+}
 
-  function closeModal(id) { 
-    document.getElementById(id).classList.remove('modal-active'); 
-  }
+// 單筆刪除
+async function deleteOrder(row){
+  if(!confirm("確定刪除?")) return;
+  await api({action:"deleteOrder",row});
+  loadOrders();
+}
 
-  // ================= 菜單管理 =================
-  async function loadAdminMenu() {
-    const tbody = document.getElementById('admin-menu-tbody');
-    tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-cyan-200">讀取中...</td></tr>';
-    const res = await api({ action: "getMenu" });
-    
-    if(res.ok) {
-        menuData = res.data;
-        tbody.innerHTML = res.data.map(m => `
-          <tr class="hover:bg-white/5 border-b border-white/5 transition">
-            <td class="px-4 py-4 font-bold text-cyan-400">${m.category}</td>
-            <td class="px-4 py-4 font-black text-white">${m.name}</td>
-            <td class="px-4 py-4 text-gray-400 text-xs">${m.desc}</td>
-            <td class="px-4 py-4 font-bold text-emerald-300">$${m.price}</td>
-            <td class="px-4 py-4 text-center space-x-3">
-              <button onclick="openMenuModal('edit', ${m.row})" class="text-blue-400 hover:text-white transition"><i class="fas fa-edit"></i></button>
-              <button onclick="prepAuth('deleteMenu', ${m.row})" class="text-gray-500 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>`).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-400">載入失敗</td></tr>';
-    }
-  }
+// 新增：全部刪除
+async function clearAllOrders(){
+  if(!confirm("確定清除所有訂單資料？此操作無法復原！")) return;
+  await api({action:"clearAllOrders"});
+  loadOrders();
+  loadOrderCards();
+}
 
-  function openMenuModal(mode, rowId) {
-    const modal = document.getElementById('modal-menu-edit');
-    modal.classList.add('modal-active');
-    
-    if(mode === 'add') {
-      document.getElementById('menu-row-id').value = "";
-      ['cat','name','desc','price'].forEach(k => document.getElementById('menu-'+k).value = "");
-      document.getElementById('menu-modal-title').innerText = "新增品項";
-    } else {
-      const item = menuData.find(m => m.row === rowId);
-      if(!item) return;
-      document.getElementById('menu-row-id').value = rowId;
-      document.getElementById('menu-cat').value = item.category;
-      document.getElementById('menu-name').value = item.name;
-      document.getElementById('menu-desc').value = item.desc;
-      document.getElementById('menu-price').value = item.price;
-      document.getElementById('menu-modal-title').innerText = "編輯品項";
-    }
-  }
-
-  // ================= 訂單總表管理 =================
-  async function loadHistory() {
-    const tbody = document.getElementById('history-tbody');
-    tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-cyan-200">讀取中...</td></tr>';
-    const res = await api({ action: "getOrderHistory" });
-    
-    if(res.ok) {
-      if(res.data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-500">尚無歷史資料</td></tr>';
-        return;
-      }
-      tbody.innerHTML = res.data.map(r => `
-        <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
-          <td class="px-4 py-4 text-xs text-gray-400">${new Date(r.time).toLocaleString()}</td>
-          <td class="px-4 py-4 font-bold text-white">${r.table}</td>
-          <td class="px-4 py-4 text-gray-200">${r.name} x ${r.qty}</td>
-          <td class="px-4 py-4 font-bold text-cyan-400">$${r.subtotal}</td>
-          <td class="px-4 py-4 text-xs"><span class="px-2 py-1 rounded ${r.status==='completed'?'bg-gray-500/20 text-gray-400':'bg-emerald-500/20 text-emerald-400'}">${r.status}</span></td>
-          <td class="px-4 py-4 text-center">
-            <button onclick="prepAuth('deleteOrder', ${r.row})" class="text-gray-500 hover:text-red-400 transition"><i class="fas fa-trash-alt"></i></button>
-          </td>
-        </tr>`).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-400">載入失敗</td></tr>';
-    }
-  }
-
-  // ================= 即時訂單邏輯 =================
-  async function loadData() {
-    const root = document.getElementById("tables-grid");
-    root.innerHTML = '<div class="col-span-full text-center p-10 text-gray-400">載入中...</div>';
-    const res = await api({ action: "getPendingOrdersMerged" });
-    
-    if(res.ok) {
-      if(res.data.length === 0) {
-        root.innerHTML = '<div class="col-span-full text-center p-10 text-gray-500">目前無待處理訂單</div>';
-        return;
-      }
-      root.innerHTML = res.data.map(t => {
-        if (!tableButtonState[t.table]) tableButtonState[t.table] = (t.status === "served") ? "completed" : "served";
-        const isWait = tableButtonState[t.table] === "completed";
-        return `
-        <div class="glass-card p-6">
-          <div class="flex justify-between items-start mb-4">
-             <div class="text-2xl font-black text-white">桌號 ${t.table}</div>
-             <button onclick="handleTableStatus('${t.table}')" class="px-4 py-2 rounded-lg font-bold text-white shadow-lg transition ${isWait ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-emerald-600 hover:bg-emerald-500'}">
-              ${isWait ? '💰 結帳' : '🚚 送餐'}
-             </button>
-          </div>
-          <div class="space-y-1 mb-4 border-t border-white/10 pt-4">
-            ${t.items.map(i => `<div class="text-sm text-gray-300 flex justify-between"><span>${i.item} x ${i.qty}</span><span class="text-cyan-300 font-bold">$${i.subtotal}</span></div>`).join('')}
-          </div>
-          <div class="text-right text-xl font-bold text-cyan-400 border-t border-white/10 pt-2">$${t.total}</div>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  async function handleTableStatus(tableNo){
-    const next = tableButtonState[tableNo];
-    if(next === 'completed' && !confirm('確定結帳？')) return;
-    const res = await api({ action: "markTableStatus", table: tableNo, status: next });
-    if(res.ok) {
-      if(next === 'completed') delete tableButtonState[tableNo];
-      else tableButtonState[tableNo] = 'completed';
-      loadData();
-    }
-  }
+// 菜單管理
+async function loadMenu(){
+  const res=await api({action:"getMenu"});
+  if(!res.ok)return;
+  document.getElementById("menuBody").innerHTML=res.data.map(m=>`
+<tr>
+<td>${m.category}</td>
+<td>${m.name}</td>
+<td>${m.desc}</td>
+<td>${m.price}</td>
+<td>
+<button onclick="showEditModal(${m.row},'${m.category}','${m.name}','${m.desc}',${m.price})" class="bg-yellow-500 text-white px-2 py-1 rounded">編輯</button>
+<button onclick="deleteMenu(${m.row})" class="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
+</td>
+</tr>`).join("");
+}
+function addMenu(){showEditModal(null,"","","",0);}
+function showEditModal(row,c,n,d,p){
+  editRow=row;
+  modalCategory.value=c;
+  modalName.value=n;
+  modalDesc.value=d;
+  modalPrice.value=p;
+  editModal.classList.remove("hidden");
+}
+async function confirmEdit(){
+  if(editRow)
+    await api({action:"editMenuItem",row:editRow,category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
+  else
+    await api({action:"addMenuItem",category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
+  cancelEdit(); loadMenu();
+}
+function cancelEdit(){editModal.classList.add("hidden");}
+async function deleteMenu(row){
+  if(!confirm("確定刪除?"))return;
+  await api({action:"deleteMenuItem",row});
+  loadMenu();
+}
 </script>
+
 </body>
 </html>
