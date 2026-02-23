@@ -72,23 +72,226 @@ input:focus { border-color: #00b4d8 !important; outline: none; }
 <body>
 
 <script>
+// ================================
+// 設定試算表 API
+// ================================
 const GAS_API_URL="https://script.google.com/macros/s/AKfycbzRPw--Hr3zzmySCk5vZH4Ksc94oYmvapia87vUhvloDb0jE2OB-Qhvp5vCPHvV9A2P/exec";
 let PASSWORD="";
 let editRow=null;
 let refreshTimer=null;
 let processingTables={};
+
+// API 呼叫
+async function api(payload){
+  payload.password=PASSWORD;
+  const res=await fetch(GAS_API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"text/plain"},
+    body:JSON.stringify(payload)
+  });
+  return await res.json();
+}
+
+// 登入
+async function login(){
+  PASSWORD = document.getElementById("pwd").value.trim();
+  if(!PASSWORD) { document.getElementById("msg").innerText="請輸入密碼"; return; }
+  try{
+    const res = await api({action:"adminLogin"});
+    if(res.ok){
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("admin").classList.remove("hidden");
+      startAutoRefresh();
+      loadOrderCards();
+    } else {
+      document.getElementById("msg").innerText="密碼錯誤";
+    }
+  }catch(e){
+    document.getElementById("msg").innerText="連線錯誤，請確認網路";
+    console.error(e);
+  }
+}
+
+// ================================
+// 分頁切換
+// ================================
+function switchTab(tab){
+  ["orders","history","menu"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
+    document.getElementById("btn-"+t).classList.remove("active");
+  });
+  document.getElementById(tab).classList.remove("hidden");
+  document.getElementById("btn-"+tab).classList.add("active");
+
+  if(tab==="orders"){ startAutoRefresh(); loadOrderCards(); }
+  else{ stopAutoRefresh(); }
+
+  if(tab==="history") loadOrders();
+  if(tab==="menu") loadMenu();
+}
+
+// ================================
+// 自動刷新
+// ================================
+function startAutoRefresh(){ stopAutoRefresh(); refreshTimer=setInterval(loadOrderCards,10000); }
+function stopAutoRefresh(){ if(refreshTimer) clearInterval(refreshTimer); }
+
+// ================================
+// 訂單管理
+// ================================
+async function loadOrderCards(){
+  const res=await api({action:"getOrderHistory"});
+  if(!res.ok) return;
+
+  const grouped={};
+  res.data.forEach(r=>{
+    if(r.status==="completed") return;
+    if(!grouped[r.table]) grouped[r.table]={items:[],status:r.status};
+    grouped[r.table].items.push(r);
+  });
+
+  const tables=Object.keys(grouped).sort((a,b)=>Number(a)-Number(b));
+  const root=document.getElementById("orderCards");
+  root.innerHTML="";
+
+  tables.forEach(table=>{
+    const data=grouped[table];
+    const total=data.items.reduce((s,i)=>s+Number(i.subtotal),0);
+    const isServed=data.status==="served";
+    const btnText=isServed?"💰 結帳":"🚚 送餐";
+    const newStatus=isServed?"completed":"served";
+    const cardClass=isServed?"card-served":"card-normal";
+
+    root.innerHTML+=`
+    <div class="${cardClass} p-4 rounded shadow">
+      <div class="flex justify-between mb-2">
+        <h3 class="font-bold text-lg">桌號 ${table}</h3>
+        <button id="btn-${table}" 
+        onclick="handleStatus('${table}','${newStatus}',${total})"
+        class="bg-${isServed?'blue':'green'}-600 text-white px-3 py-1 rounded">
+        ${btnText}
+        </button>
+      </div>
+      ${data.items.map(i=>`
+        <div class="flex justify-between text-sm">
+          <span>${i.name} x ${i.qty}</span>
+          <span>$${i.subtotal}</span>
+        </div>`).join("")}
+      <div class="text-right font-bold text-red-600 mt-2">總計 $${total}</div>
+    </div>`;
+  });
+}
+
+// 狀態處理
+async function handleStatus(table,newStatus,total){
+  if(processingTables[table]) return;
+  processingTables[table]=true;
+
+  if(newStatus==="completed"){
+    if(!confirm(`確定結帳？\n桌號 ${table}\n金額 $${total}`)){
+      processingTables[table]=false;
+      return;
+    }
+  }
+
+  document.getElementById("btn-"+table).disabled=true;
+
+  const res=await api({action:"getOrderHistory"});
+  const rows=res.data.filter(r=>r.table==table && r.status!=="completed");
+
+  for(const r of rows){
+    if(newStatus==="served" && r.status==="completed") continue;
+    await api({action:"editOrderStatus",row:r.row,status:newStatus});
+  }
+
+  processingTables[table]=false;
+  loadOrderCards();
+  loadOrders();
+}
+
+// 訂單總表
+async function loadOrders(){
+  const res=await api({action:"getOrderHistory"});
+  if(!res.ok)return;
+  document.getElementById("orderBody").innerHTML=res.data.map(r=>`
+<tr>
+<td>${new Date(r.time).toLocaleString()}</td>
+<td>${r.name}</td>
+<td>${r.price}</td>
+<td>${r.qty}</td>
+<td>${r.subtotal}</td>
+<td>${r.table}</td>
+<td>${r.status}</td>
+<td><button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteOrder(${r.row})">刪除</button></td>
+</tr>`).join("");
+}
+
+// 單筆刪除
+async function deleteOrder(row){
+  if(!confirm("確定刪除?")) return;
+  await api({action:"deleteOrder",row});
+  loadOrders();
+}
+
+// 全部刪除
+async function clearAllOrders(){
+  if(!confirm("確定清除所有訂單資料？此操作無法復原！")) return;
+  await api({action:"clearAllOrders"});
+  loadOrders();
+  loadOrderCards();
+}
+
+// 菜單管理
+async function loadMenu(){
+  const res=await api({action:"getMenu"});
+  if(!res.ok)return;
+  document.getElementById("menuBody").innerHTML=res.data.map(m=>`
+<tr>
+<td>${m.category}</td>
+<td>${m.name}</td>
+<td>${m.desc}</td>
+<td>${m.price}</td>
+<td>
+<button onclick="showEditModal(${m.row},'${m.category}','${m.name}','${m.desc}',${m.price})" class="bg-yellow-500 text-white px-2 py-1 rounded">編輯</button>
+<button onclick="deleteMenu(${m.row})" class="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
+</td>
+</tr>`).join("");
+}
+function addMenu(){showEditModal(null,"","","",0);}
+function showEditModal(row,c,n,d,p){
+  editRow=row;
+  modalCategory.value=c;
+  modalName.value=n;
+  modalDesc.value=d;
+  modalPrice.value=p;
+  editModal.classList.remove("hidden");
+}
+async function confirmEdit(){
+  if(editRow)
+    await api({action:"editMenuItem",row:editRow,category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
+  else
+    await api({action:"addMenuItem",category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
+  cancelEdit(); loadMenu();
+}
+function cancelEdit(){editModal.classList.add("hidden");}
+async function deleteMenu(row){
+  if(!confirm("確定刪除?"))return;
+  await api({action:"deleteMenuItem",row});
+  loadMenu();
+}
 </script>
 
-<!-- 登入 -->
-<div id="login" class="fixed inset-0 bg-blue-900 flex items-center justify-center">
+<!-- 登入畫面 -->
+<div id="login" class="fixed inset-0 flex items-center justify-center bg-blue-900">
   <div class="bg-glass-card p-8 rounded-2xl w-80">
     <h2 class="text-xl font-bold text-center mb-4">管理登入</h2>
-    <input id="pwd" type="password" class="w-full border p-2 mb-4 rounded" onkeypress="if(event.key==='Enter'){login();}">
+    <input id="pwd" type="password" class="w-full border p-2 mb-4 rounded" placeholder="請輸入密碼" onkeypress="if(event.key==='Enter'){login();}">
     <button onclick="login()" class="w-full bg-gradient-to-r from-blue-700 to-sky-500 text-white p-2 rounded">登入</button>
     <div id="msg" class="text-red-500 text-center mt-2"></div>
   </div>
 </div>
 
+<!-- 管理頁 -->
 <div id="admin" class="hidden">
 
 <header class="bg-gradient-to-r from-blue-800 to-sky-700 text-white p-4 flex justify-between glass-card shadow-lg">
@@ -163,203 +366,6 @@ let processingTables={};
 </div>
 </div>
 </div>
-
-<script>
-
-// API
-async function api(payload){
-  payload.password=PASSWORD;
-  const res=await fetch(GAS_API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"text/plain"},
-    body:JSON.stringify(payload)
-  });
-  return await res.json();
-}
-
-// 登入
-async function login(){
-  PASSWORD=document.getElementById("pwd").value;
-  const res=await api({action:"adminLogin"});
-  if(res.ok){
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("admin").classList.remove("hidden");
-    startAutoRefresh();
-    loadOrderCards();
-  }else{
-    document.getElementById("msg").innerText="密碼錯誤";
-  }
-}
-
-// 分頁
-function switchTab(tab){
-  ["orders","history","menu"].forEach(t=>{
-    document.getElementById(t).classList.add("hidden");
-    document.getElementById("btn-"+t).classList.remove("active");
-  });
-  document.getElementById(tab).classList.remove("hidden");
-  document.getElementById("btn-"+tab).classList.add("active");
-
-  if(tab==="orders"){ startAutoRefresh(); loadOrderCards(); }
-  else{ stopAutoRefresh(); }
-
-  if(tab==="history") loadOrders();
-  if(tab==="menu") loadMenu();
-}
-
-// 自動刷新
-function startAutoRefresh(){
-  stopAutoRefresh();
-  refreshTimer=setInterval(loadOrderCards,10000);
-}
-function stopAutoRefresh(){
-  if(refreshTimer) clearInterval(refreshTimer);
-}
-
-// 訂單管理
-async function loadOrderCards(){
-  const res=await api({action:"getOrderHistory"});
-  if(!res.ok) return;
-
-  const grouped={};
-
-  res.data.forEach(r=>{
-    if(r.status==="completed") return;
-    if(!grouped[r.table]) grouped[r.table]={items:[],status:r.status};
-    grouped[r.table].items.push(r);
-  });
-
-  const tables=Object.keys(grouped).sort((a,b)=>Number(a)-Number(b));
-  const root=document.getElementById("orderCards");
-  root.innerHTML="";
-
-  tables.forEach(table=>{
-    const data=grouped[table];
-    const total=data.items.reduce((s,i)=>s+Number(i.subtotal),0);
-    const isServed=data.status==="served";
-    const btnText=isServed?"💰 結帳":"🚚 送餐";
-    const newStatus=isServed?"completed":"served";
-    const cardClass=isServed?"card-served":"card-normal";
-
-    root.innerHTML+=`
-    <div class="${cardClass} p-4 rounded shadow">
-      <div class="flex justify-between mb-2">
-        <h3 class="font-bold text-lg">桌號 ${table}</h3>
-        <button id="btn-${table}" 
-        onclick="handleStatus('${table}','${newStatus}',${total})"
-        class="bg-${isServed?'blue':'green'}-600 text-white px-3 py-1 rounded">
-        ${btnText}
-        </button>
-      </div>
-      ${data.items.map(i=>`
-        <div class="flex justify-between text-sm">
-          <span>${i.name} x ${i.qty}</span>
-          <span>$${i.subtotal}</span>
-        </div>`).join("")}
-      <div class="text-right font-bold text-red-600 mt-2">總計 $${total}</div>
-    </div>`;
-  });
-}
-
-// 狀態處理
-async function handleStatus(table,newStatus,total){
-
-  if(processingTables[table]) return;
-  processingTables[table]=true;
-
-  if(newStatus==="completed"){
-    if(!confirm(`確定結帳？\n桌號 ${table}\n金額 $${total}`)){
-      processingTables[table]=false;
-      return;
-    }
-  }
-
-  document.getElementById("btn-"+table).disabled=true;
-
-  const res=await api({action:"getOrderHistory"});
-  const rows=res.data.filter(r=>r.table==table && r.status!=="completed");
-
-  for(const r of rows){
-    if(newStatus==="served" && r.status==="completed") continue;
-    await api({action:"editOrderStatus",row:r.row,status:newStatus});
-  }
-
-  processingTables[table]=false;
-  loadOrderCards();
-  loadOrders();
-}
-
-// 訂單總表
-async function loadOrders(){
-  const res=await api({action:"getOrderHistory"});
-  if(!res.ok)return;
-  document.getElementById("orderBody").innerHTML=res.data.map(r=>`
-<tr>
-<td>${new Date(r.time).toLocaleString()}</td>
-<td>${r.name}</td>
-<td>${r.price}</td>
-<td>${r.qty}</td>
-<td>${r.subtotal}</td>
-<td>${r.table}</td>
-<td>${r.status}</td>
-<td><button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteOrder(${r.row})">刪除</button></td>
-</tr>`).join("");
-}
-
-// 單筆刪除
-async function deleteOrder(row){
-  if(!confirm("確定刪除?")) return;
-  await api({action:"deleteOrder",row});
-  loadOrders();
-}
-
-// 新增：全部刪除
-async function clearAllOrders(){
-  if(!confirm("確定清除所有訂單資料？此操作無法復原！")) return;
-  await api({action:"clearAllOrders"});
-  loadOrders();
-  loadOrderCards();
-}
-
-// 菜單管理
-async function loadMenu(){
-  const res=await api({action:"getMenu"});
-  if(!res.ok)return;
-  document.getElementById("menuBody").innerHTML=res.data.map(m=>`
-<tr>
-<td>${m.category}</td>
-<td>${m.name}</td>
-<td>${m.desc}</td>
-<td>${m.price}</td>
-<td>
-<button onclick="showEditModal(${m.row},'${m.category}','${m.name}','${m.desc}',${m.price})" class="bg-yellow-500 text-white px-2 py-1 rounded">編輯</button>
-<button onclick="deleteMenu(${m.row})" class="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
-</td>
-</tr>`).join("");
-}
-function addMenu(){showEditModal(null,"","","",0);}
-function showEditModal(row,c,n,d,p){
-  editRow=row;
-  modalCategory.value=c;
-  modalName.value=n;
-  modalDesc.value=d;
-  modalPrice.value=p;
-  editModal.classList.remove("hidden");
-}
-async function confirmEdit(){
-  if(editRow)
-    await api({action:"editMenuItem",row:editRow,category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
-  else
-    await api({action:"addMenuItem",category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
-  cancelEdit(); loadMenu();
-}
-function cancelEdit(){editModal.classList.add("hidden");}
-async function deleteMenu(row){
-  if(!confirm("確定刪除?"))return;
-  await api({action:"deleteMenuItem",row});
-  loadMenu();
-}
-</script>
 
 </body>
 </html>
