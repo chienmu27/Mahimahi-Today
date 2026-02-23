@@ -1,80 +1,28 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>好漁日｜深海藍管理系統</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-body { 
-  font-family: 'Noto Sans TC', sans-serif; 
-  background: linear-gradient(135deg, #041c32, #04293a, #064663);
-  background-attachment: fixed;
-  color: #e8f6ff;
-  min-height: 100vh;
-}
-.glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-}
-.nav-btn.active { 
-  background: linear-gradient(135deg, #0077b6, #00b4d8);
-  color: white; 
-  box-shadow: 0 4px 15px rgba(0, 180, 216, 0.4);
-}
-.nav-btn { color: #a9d6e5; transition: all 0.3s ease; }
-
-.modal-bg {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.modal {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(12px);
-  padding: 20px;
-  border-radius: 16px;
-  min-width: 300px;
-  color: #e8f6ff;
-}
-
-.card-served {
-  background: rgba(0,119,182,0.2);
-  border: 2px solid #00b4d8;
-}
-.card-normal {
-  background: rgba(255,255,255,0.05);
-  border: 2px solid rgba(255,255,255,0.1);
-}
-
-table th { background: rgba(0, 119, 182, 0.3) !important; color: #90e0ef; text-transform: uppercase; font-size: 0.85rem;}
-table td { border-bottom: 1px solid rgba(255,255,255,0.05); }
-table tr:hover { background-color: rgba(255,255,255,0.05); }
-
-input { 
-  background: rgba(0, 0, 0, 0.3) !important; 
-  border: 1px solid rgba(255, 255, 255, 0.2) !important; 
-  color: white !important; 
-  border-radius: 8px;
-}
-input:focus { border-color: #00b4d8 !important; outline: none; }
+body{font-family:'Noto Sans TC',sans-serif;background:#041c32;color:#e8f6ff;min-height:100vh;}
+.nav-btn{padding:6px 14px;border-radius:8px;color:#a9d6e5;transition:all .3s}
+.nav-btn.active{background:linear-gradient(135deg,#0077b6,#00b4d8);color:white;font-weight:bold}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:rgba(255,255,255,0.05);backdrop-filter:blur(12px);padding:20px;border-radius:16px;min-width:300px;color:#e8f6ff;}
+.card-served{background:rgba(0,119,182,0.2);border:2px solid #00b4d8;}
+.card-normal{background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);}
+table th{background:rgba(0,119,182,0.3);color:#90e0ef;text-transform:uppercase;font-size:.85rem;}
+table td{border-bottom:1px solid rgba(255,255,255,.05);}
+table tr:hover{background-color:rgba(255,255,255,.05);}
+input{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);color:white;border-radius:8px;}
+input:focus{border-color:#00b4d8;outline:none;}
 </style>
 </head>
 <body>
 
 <script>
-// ================================
-// 設定試算表 API
-// ================================
 const GAS_API_URL="https://script.google.com/macros/s/AKfycbzRPw--Hr3zzmySCk5vZH4Ksc94oYmvapia87vUhvloDb0jE2OB-Qhvp5vCPHvV9A2P/exec";
 let PASSWORD="";
 let editRow=null;
@@ -95,15 +43,15 @@ async function api(payload){
 // 登入
 async function login(){
   PASSWORD = document.getElementById("pwd").value.trim();
-  if(!PASSWORD) { document.getElementById("msg").innerText="請輸入密碼"; return; }
+  if(!PASSWORD){document.getElementById("msg").innerText="請輸入密碼";return;}
   try{
-    const res = await api({action:"adminLogin"});
+    const res=await api({action:"adminLogin"});
     if(res.ok){
       document.getElementById("login").classList.add("hidden");
       document.getElementById("admin").classList.remove("hidden");
       startAutoRefresh();
       loadOrderCards();
-    } else {
+    }else{
       document.getElementById("msg").innerText="密碼錯誤";
     }
   }catch(e){
@@ -112,9 +60,7 @@ async function login(){
   }
 }
 
-// ================================
-// 分頁切換
-// ================================
+// 分頁
 function switchTab(tab){
   ["orders","history","menu"].forEach(t=>{
     document.getElementById(t).classList.add("hidden");
@@ -122,38 +68,29 @@ function switchTab(tab){
   });
   document.getElementById(tab).classList.remove("hidden");
   document.getElementById("btn-"+tab).classList.add("active");
-
-  if(tab==="orders"){ startAutoRefresh(); loadOrderCards(); }
-  else{ stopAutoRefresh(); }
-
+  if(tab==="orders"){startAutoRefresh();loadOrderCards();}
+  else{stopAutoRefresh();}
   if(tab==="history") loadOrders();
   if(tab==="menu") loadMenu();
 }
 
-// ================================
 // 自動刷新
-// ================================
-function startAutoRefresh(){ stopAutoRefresh(); refreshTimer=setInterval(loadOrderCards,10000); }
-function stopAutoRefresh(){ if(refreshTimer) clearInterval(refreshTimer); }
+function startAutoRefresh(){stopAutoRefresh();refreshTimer=setInterval(loadOrderCards,10000);}
+function stopAutoRefresh(){if(refreshTimer) clearInterval(refreshTimer);}
 
-// ================================
 // 訂單管理
-// ================================
 async function loadOrderCards(){
   const res=await api({action:"getOrderHistory"});
   if(!res.ok) return;
-
   const grouped={};
   res.data.forEach(r=>{
     if(r.status==="completed") return;
     if(!grouped[r.table]) grouped[r.table]={items:[],status:r.status};
     grouped[r.table].items.push(r);
   });
-
   const tables=Object.keys(grouped).sort((a,b)=>Number(a)-Number(b));
   const root=document.getElementById("orderCards");
   root.innerHTML="";
-
   tables.forEach(table=>{
     const data=grouped[table];
     const total=data.items.reduce((s,i)=>s+Number(i.subtotal),0);
@@ -161,22 +98,13 @@ async function loadOrderCards(){
     const btnText=isServed?"💰 結帳":"🚚 送餐";
     const newStatus=isServed?"completed":"served";
     const cardClass=isServed?"card-served":"card-normal";
-
     root.innerHTML+=`
     <div class="${cardClass} p-4 rounded shadow">
       <div class="flex justify-between mb-2">
         <h3 class="font-bold text-lg">桌號 ${table}</h3>
-        <button id="btn-${table}" 
-        onclick="handleStatus('${table}','${newStatus}',${total})"
-        class="bg-${isServed?'blue':'green'}-600 text-white px-3 py-1 rounded">
-        ${btnText}
-        </button>
+        <button id="btn-${table}" onclick="handleStatus('${table}','${newStatus}',${total})" class="bg-${isServed?'blue':'green'}-600 text-white px-3 py-1 rounded">${btnText}</button>
       </div>
-      ${data.items.map(i=>`
-        <div class="flex justify-between text-sm">
-          <span>${i.name} x ${i.qty}</span>
-          <span>$${i.subtotal}</span>
-        </div>`).join("")}
+      ${data.items.map(i=>`<div class="flex justify-between text-sm"><span>${i.name} x ${i.qty}</span><span>$${i.subtotal}</span></div>`).join("")}
       <div class="text-right font-bold text-red-600 mt-2">總計 $${total}</div>
     </div>`;
   });
@@ -186,24 +114,19 @@ async function loadOrderCards(){
 async function handleStatus(table,newStatus,total){
   if(processingTables[table]) return;
   processingTables[table]=true;
-
   if(newStatus==="completed"){
     if(!confirm(`確定結帳？\n桌號 ${table}\n金額 $${total}`)){
       processingTables[table]=false;
       return;
     }
   }
-
   document.getElementById("btn-"+table).disabled=true;
-
   const res=await api({action:"getOrderHistory"});
   const rows=res.data.filter(r=>r.table==table && r.status!=="completed");
-
   for(const r of rows){
     if(newStatus==="served" && r.status==="completed") continue;
     await api({action:"editOrderStatus",row:r.row,status:newStatus});
   }
-
   processingTables[table]=false;
   loadOrderCards();
   loadOrders();
@@ -227,24 +150,15 @@ async function loadOrders(){
 }
 
 // 單筆刪除
-async function deleteOrder(row){
-  if(!confirm("確定刪除?")) return;
-  await api({action:"deleteOrder",row});
-  loadOrders();
-}
+async function deleteOrder(row){if(!confirm("確定刪除?")) return; await api({action:"deleteOrder",row}); loadOrders();}
 
 // 全部刪除
-async function clearAllOrders(){
-  if(!confirm("確定清除所有訂單資料？此操作無法復原！")) return;
-  await api({action:"clearAllOrders"});
-  loadOrders();
-  loadOrderCards();
-}
+async function clearAllOrders(){if(!confirm("確定清除所有訂單資料？")) return; await api({action:"clearAllOrders"}); loadOrders(); loadOrderCards();}
 
 // 菜單管理
 async function loadMenu(){
   const res=await api({action:"getMenu"});
-  if(!res.ok)return;
+  if(!res.ok) return;
   document.getElementById("menuBody").innerHTML=res.data.map(m=>`
 <tr>
 <td>${m.category}</td>
@@ -258,27 +172,14 @@ async function loadMenu(){
 </tr>`).join("");
 }
 function addMenu(){showEditModal(null,"","","",0);}
-function showEditModal(row,c,n,d,p){
-  editRow=row;
-  modalCategory.value=c;
-  modalName.value=n;
-  modalDesc.value=d;
-  modalPrice.value=p;
-  editModal.classList.remove("hidden");
-}
+function showEditModal(row,c,n,d,p){editRow=row;modalCategory.value=c;modalName.value=n;modalDesc.value=d;modalPrice.value=p;editModal.classList.remove("hidden");}
 async function confirmEdit(){
-  if(editRow)
-    await api({action:"editMenuItem",row:editRow,category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
-  else
-    await api({action:"addMenuItem",category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
+  if(editRow) await api({action:"editMenuItem",row:editRow,category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
+  else await api({action:"addMenuItem",category:modalCategory.value,name:modalName.value,desc:modalDesc.value,price:modalPrice.value});
   cancelEdit(); loadMenu();
 }
 function cancelEdit(){editModal.classList.add("hidden");}
-async function deleteMenu(row){
-  if(!confirm("確定刪除?"))return;
-  await api({action:"deleteMenuItem",row});
-  loadMenu();
-}
+async function deleteMenu(row){if(!confirm("確定刪除?"))return; await api({action:"deleteMenuItem",row}); loadMenu();}
 </script>
 
 <!-- 登入畫面 -->
@@ -293,7 +194,6 @@ async function deleteMenu(row){
 
 <!-- 管理頁 -->
 <div id="admin" class="hidden">
-
 <header class="bg-gradient-to-r from-blue-800 to-sky-700 text-white p-4 flex justify-between glass-card shadow-lg">
 <h1 class="text-lg font-bold">好漁日｜深海藍管理系統</h1>
 <div class="flex gap-2">
@@ -304,8 +204,6 @@ async function deleteMenu(row){
 </header>
 
 <div class="p-6">
-
-<!-- 訂單管理 -->
 <section id="orders">
 <div class="flex justify-between mb-4">
 <h2 class="font-bold text-lg">即時訂單</h2>
@@ -314,7 +212,6 @@ async function deleteMenu(row){
 <div id="orderCards" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 </section>
 
-<!-- 訂單總表 -->
 <section id="history" class="hidden">
 <div class="flex justify-end mb-2">
 <button onclick="clearAllOrders()" class="bg-red-600 text-white px-3 py-1 rounded">全部刪除</button>
@@ -336,7 +233,6 @@ async function deleteMenu(row){
 </table>
 </section>
 
-<!-- 菜單管理 -->
 <section id="menu" class="hidden">
 <button onclick="addMenu()" class="mb-3 bg-green-600 text-white px-3 py-1 rounded">新增</button>
 <table class="w-full glass-card shadow rounded">
@@ -346,11 +242,9 @@ async function deleteMenu(row){
 <tbody id="menuBody"></tbody>
 </table>
 </section>
-
 </div>
 </div>
 
-<!-- 編輯彈窗 -->
 <div id="editModal" class="modal-bg hidden">
 <div class="modal">
 <h3 class="text-lg font-bold mb-2">編輯菜單</h3>
