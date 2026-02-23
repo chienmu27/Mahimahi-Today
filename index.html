@@ -1,94 +1,107 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>好漁日 Mahimahi Today - 訂餐系統</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-    
-    body { 
-      font-family: 'Noto Sans TC', sans-serif; 
-      background: linear-gradient(to bottom, #0ea5e9, #e0f7ff); 
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-    
-    /* 海浪動畫 */
-    .wave {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 200%;
-      height: 120px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 43%;
-      animation: waveMove 12s linear infinite;
-      z-index: -1;
-    }
-    .wave:nth-child(2) {
-      bottom: 10px;
-      opacity: 0.5;
-      animation-duration: 18s;
-    }
-    @keyframes waveMove {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好漁日 Mahimahi Today - 訂餐系統</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
 
-    /* 魚群動畫 */
-    .fish {
-      position: fixed;
-      top: 20%;
-      font-size: 40px;
-      animation: fishSwim 25s linear infinite;
-      opacity: 0.15;
-      z-index: -2;
-    }
-    @keyframes fishSwim {
-      from { transform: translateX(-10%); }
-      to { transform: translateX(110vw); }
-    }
+body { 
+  font-family: 'Noto Sans TC', sans-serif; 
+  background: linear-gradient(to bottom, #0ea5e9, #e0f7ff); 
+  overflow-x: hidden;
+  min-height: 100vh;
+}
 
-    /* 毛玻璃卡片 */
-    .glass-card {
-      backdrop-filter: blur(8px);
-      background: rgba(255,255,255,0.75);
-      border: 1px solid rgba(255,255,255,0.6);
-    }
+/* 海浪動畫 */
+.wave {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 120px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 43%;
+  animation: waveMove 12s linear infinite;
+  z-index: -1;
+}
+.wave:nth-child(2) {
+  bottom: 10px;
+  opacity: 0.5;
+  animation-duration: 18s;
+}
+@keyframes waveMove {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 
-    .category-btn.active { 
-      background-color: #0284c7; /* Sky-600 */
-      color: white; 
-      border-color: #0284c7;
-    }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    
-    .marquee-wrapper {
-      width: 100%;
-      overflow: hidden;
-      background: rgba(255,255,255,0.3);
-      backdrop-filter: blur(4px);
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.5);
-    }
-    .marquee-text {
-      display: inline-block;
-      white-space: nowrap;
-      font-size: 1.15rem;
-      font-weight: bold;
-      color: #0369a1; /* Sky-700 */
-      animation: marquee 22s linear infinite;
-      text-align: center;
-      width: 100%;
-    }
-    @keyframes marquee {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-  </style>
+/* 魚群動畫 */
+.fish {
+  position: fixed;
+  top: 20%;
+  font-size: 40px;
+  animation: fishSwim 25s linear infinite;
+  opacity: 0.15;
+  z-index: -2;
+}
+@keyframes fishSwim {
+  from { transform: translateX(-10%); }
+  to { transform: translateX(110vw); }
+}
+
+/* 毛玻璃卡片 */
+.glass-card {
+  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+.category-btn.active { 
+  background-color: #0284c7;
+  color: white; 
+  border-color: #0284c7;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  background: rgba(255,255,255,0.3);
+  backdrop-filter: blur(4px);
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+}
+.marquee-text {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #0369a1;
+  animation: marquee 22s linear infinite;
+  text-align: center;
+  width: 100%;
+}
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* 結帳動畫 */
+@keyframes coinDrop {
+  0% { transform: translateY(-50px) rotate(0deg); opacity:1; }
+  100% { transform: translateY(300px) rotate(720deg); opacity:0; }
+}
+.coin {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: url('https://i.imgur.com/Opz0F2u.png') no-repeat center/contain;
+  pointer-events: none;
+}
+</style>
 </head>
 
 <body class="pb-20">
@@ -101,15 +114,14 @@
 <header class="bg-sky-700 text-white p-4 shadow-xl sticky top-0 z-50">
   <div class="container mx-auto flex justify-between items-center">
     <h1 class="text-2xl font-black tracking-wider">🐟 好漁日</h1>
-    
     <div class="flex items-center gap-6 flex-grow justify-center">
-      <div class="text-lg bg-white/20 px-4 py-1 rounded-full scale-110">
+      <div class="text-lg bg-white/20 px-4 py-1 rounded-full scale-125">
         桌號：<span id="table-no">-</span>
       </div>
-      <div onclick="toggleCart()" class="relative cursor-pointer flex items-center gap-2 scale-110">
-        <span class="hidden md:inline-block font-bold">查看訂單</span>
+      <div onclick="toggleCart()" class="relative cursor-pointer flex items-center gap-2 scale-125">
+        <span class="hidden md:inline-block font-bold">檢查購物車</span>
         <i class="fas fa-shopping-cart text-2xl"></i>
-        <span id="cart-count" class="absolute -top-2 -right-2 bg-yellow-300 text-sky-900 text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+        <span id="cart-count" class="absolute -top-2 -right-2 bg-yellow-400 text-red-800 text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
       </div>
     </div>
     <div class="w-10"></div>
@@ -120,206 +132,77 @@
   <div class="marquee-text" id="marquee-info">正在載入公告資訊...</div>
 </div>
 
-<nav id="category-nav" class="sticky top-[78px] bg-white/80 backdrop-blur border-b overflow-x-auto whitespace-nowrap z-40 px-4 py-3 flex gap-2 no-scrollbar">
-  <button onclick="filterMenu('all')" class="category-btn active px-4 py-1.5 rounded-full border border-gray-300 text-sm font-bold text-gray-600">全部</button>
+<nav id="category-nav" class="sticky top-[72px] bg-sky-500 border-b overflow-x-auto whitespace-nowrap z-40 px-4 py-3 flex gap-2 no-scrollbar">
+  <button onclick="filterMenu('all')" class="category-btn active px-4 py-1.5 rounded-full border border-gray-300 text-sm">全部</button>
 </nav>
 
 <main class="container mx-auto p-4">
-  <div id="loading-spinner" class="text-center py-20 text-white">
+  <div id="loading-spinner" class="text-center py-20 text-gray-700">
     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
-    <p>正在捕撈最新菜單...</p>
+    <p>正在載入菜單...</p>
   </div>
   <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 </main>
 
-<div id="cart-sidebar" class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-[60] flex flex-col">
-  <div class="p-4 border-b flex justify-between items-center bg-sky-700 text-white">
-    <h3 class="font-bold text-xl">🧺 已選海味</h3>
-    <button onclick="toggleCart()" class="text-white text-2xl">&times;</button>
+<div id="cart-sidebar" class="fixed inset-y-0 right-0 w-80 bg-white/80 backdrop-blur-md shadow-2xl transform translate-x-full transition-transform duration-300 z-[60] flex flex-col text-blue-900">
+  <div class="p-4 border-b flex justify-between items-center bg-sky-200">
+    <h3 class="font-bold text-xl">已選餐點</h3>
+    <button onclick="toggleCart()" class="text-blue-900 text-2xl">&times;</button>
   </div>
   <div id="cart-items" class="flex-grow overflow-y-auto p-4 space-y-4"></div>
-  <div class="p-4 border-t bg-gray-50">
-    <div class="flex justify-between mb-4"><span class="font-bold">總計：</span><span class="text-sky-700 font-bold text-xl" id="total-price">$0</span></div>
-    <button id="btn-submit" onclick="submitOrder()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold hover:bg-sky-700 transition">送出訂單</button>
+  <div class="p-4 border-t bg-sky-200">
+    <div class="flex justify-between mb-4"><span class="font-bold">總計：</span><span class="text-yellow-400 font-bold text-xl" id="total-price">$0</span></div>
+    <button id="btn-submit" onclick="submitOrder()" class="w-full bg-yellow-400 text-blue-900 py-3 rounded-lg font-bold relative overflow-hidden">送出訂單</button>
   </div>
 </div>
 <div id="overlay" onclick="toggleCart()" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50"></div>
 
 <script>
-  // 請記得部署後更新此 URL
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyXw6L_72xAE08U6-hRJm0S52cNCT4NliKGlAmRn5Ya361xfDGhG8d59jZmXqFNsNBt/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxiX5T008eyN205KpU-X8pAPKZ4F9mGW89XgbDbAwnIOLwgUlb9xJIiieLKeLpD-uMw/exec";
+let menuData=[], cart=[], TABLE_NO="";
 
-  let menuData = [];
-  let cart = [];
-  let TABLE_NO = "";
+function dropCoin() {
+  const btn = document.getElementById('btn-submit');
+  const coin = document.createElement('div');
+  coin.className = 'coin';
+  const rect = btn.getBoundingClientRect();
+  coin.style.left = rect.left + rect.width/2 + 'px';
+  coin.style.top = rect.top + 'px';
+  document.body.appendChild(coin);
+  coin.style.animation = 'coinDrop 1s forwards';
+  setTimeout(()=>coin.remove(),1000);
+}
 
-  async function postData(payload) {
-    const res = await fetch(GAS_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-    return await res.json();
-  }
-
-  async function fetchConfig() {
-    try {
-      const res = await fetch(`${GAS_API_URL}?action=getConfig`);
-      const result = await res.json();
-      if (result.ok) {
-        document.getElementById('marquee-info').innerText = result.marqueeText || "歡迎光臨好漁日！";
-      }
-    } catch (e) {
-      document.getElementById('marquee-info').innerText = "今日推薦：鬼頭刀魚排、鮮味海鮮粥，新鮮上桌！";
+async function submitOrder() {
+  if(!TABLE_NO) return alert("請由桌上 QR Code 進入系統");
+  if(!cart.length) return alert("請先選擇餐點");
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.innerText = "傳送中...";
+  try {
+    const res = await fetch(GAS_API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"submitOrder",table:TABLE_NO,items:cart})});
+    const result=await res.json();
+    if(result.ok){ 
+      alert("訂單已送出！請稍候餐點"); 
+      cart=[]; updateUI(); 
+      if(document.getElementById('cart-sidebar').classList.contains('translate-x-0')) toggleCart();
+      displayMenu('all');
+      dropCoin();
     }
-  }
+  } catch(e){ alert("連線失敗，請檢查網路"); }
+  btn.disabled=false; btn.innerText="送出訂單";
+}
 
-  async function fetchMenu() {
-    try {
-      const res = await fetch(`${GAS_API_URL}?action=getMenu`);
-      const result = await res.json();
-      if (result.ok) {
-        menuData = result.data;
-        renderCats();
-        displayMenu('all');
-        document.getElementById('loading-spinner').style.display = 'none';
-      }
-    } catch (e) {
-      document.getElementById('loading-spinner').innerHTML = "菜單載入失敗，請確認網路連接";
-    }
-  }
-
-  function renderCats() {
-    const nav = document.getElementById('category-nav');
-    const cats = [...new Set(menuData.map(i => i.category))];
-    cats.forEach(c => {
-      const b = document.createElement('button');
-      b.className = "category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-bold text-gray-600";
-      b.innerText = c;
-      b.onclick = () => filterMenu(c);
-      nav.appendChild(b);
-    });
-  }
-
-  function displayMenu(f) {
-    const container = document.getElementById('menu-container');
-    container.innerHTML = '';
-    const items = f === 'all' ? menuData : menuData.filter(i => i.category === f);
-    
-    items.forEach((i) => {
-      const cartItem = cart.find(c => c.name === i.name);
-      const qty = cartItem ? cartItem.qty : 0;
-      
-      const card = document.createElement('div');
-      card.className = "glass-card rounded-xl shadow-lg p-4 flex justify-between items-center";
-      card.innerHTML = `
-          <div class="flex-grow">
-            <span class="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded font-bold">${i.category}</span>
-            <h3 class="font-bold mt-1 text-lg text-sky-900">${i.name}</h3>
-            <p class="text-xs text-gray-500">${i.desc}</p>
-            <p class="text-sky-700 font-bold mt-2 text-lg">$${i.price}</p>
-          </div>
-          <div class="flex items-center gap-3 bg-white p-1.5 rounded-full border border-gray-200 shadow-inner">
-            <button onclick="removeFromCart(this, '${i.name}')" class="bg-gray-100 text-gray-700 w-8 h-8 rounded-full shadow-sm flex items-center justify-center hover:bg-gray-200 active:scale-90 transition">-</button>
-            <span class="qty-display font-bold min-w-[20px] text-center text-lg text-sky-800">${qty}</span>
-            <button onclick="addToCart(this, '${i.name}')" class="bg-sky-600 text-white w-8 h-8 rounded-full shadow-sm flex items-center justify-center hover:bg-sky-700 active:scale-90 transition">+</button>
-          </div>`;
-      container.appendChild(card);
-    });
-  }
-
-  function addToCart(btn, itemName) {
-    const itemInfo = menuData.find(m => m.name === itemName);
-    let cartItem = cart.find(c => c.name === itemName);
-    
-    if (cartItem) {
-      cartItem.qty++;
-    } else {
-      cartItem = { ...itemInfo, qty: 1 };
-      cart.push(cartItem);
-    }
-    
-    const qtySpan = btn.parentElement.querySelector('.qty-display');
-    qtySpan.innerText = cartItem.qty;
-    updateUI();
-  }
-
-  function removeFromCart(btn, itemName) {
-    const cartIdx = cart.findIndex(c => c.name === itemName);
-    let finalQty = 0;
-    
-    if (cartIdx > -1) {
-      cart[cartIdx].qty--;
-      finalQty = cart[cartIdx].qty;
-      if (cart[cartIdx].qty <= 0) {
-        cart.splice(cartIdx, 1);
-      }
-    }
-    
-    const qtySpan = btn.parentElement.querySelector('.qty-display');
-    qtySpan.innerText = finalQty;
-    updateUI();
-  }
-
-  function updateUI() {
-    const list = document.getElementById('cart-items');
-    list.innerHTML = cart.length ? '' : '<p class="text-gray-400 text-center py-10">購物車目前是空的</p>';
-    let total = 0, count = 0;
-    
-    cart.forEach(c => {
-      total += c.price * c.qty; 
-      count += c.qty;
-      list.innerHTML += `
-        <div class="flex justify-between items-center text-sm border-b pb-2 mb-2">
-          <div>
-            <div class="font-bold text-gray-800">${c.name}</div>
-            <div class="text-gray-500">$${c.price} x ${c.qty}</div>
-          </div>
-          <span class="font-bold text-sky-700 text-base">$${c.price*c.qty}</span>
-        </div>`;
-    });
-    
-    document.getElementById('cart-count').innerText = count;
-    document.getElementById('total-price').innerText = `$${total}`;
-  }
-
-  async function submitOrder() {
-    if(!TABLE_NO) return alert("請由桌上 QR Code 進入系統");
-    if(!cart.length) return alert("請先選擇餐點");
-    const btn = document.getElementById('btn-submit');
-    btn.disabled = true; btn.innerText = "傳送中...";
-    try {
-      const res = await postData({ action: "submitOrder", table: TABLE_NO, items: cart });
-      if(res.ok) { 
-        alert("訂單已送出！請稍候餐點"); 
-        cart = []; 
-        updateUI(); 
-        if(document.getElementById('cart-sidebar').classList.contains('translate-x-0')) toggleCart();
-        displayMenu('all');
-      }
-    } catch(e) { alert("連線失敗，請檢查網路"); }
-    btn.disabled = false; btn.innerText = "送出訂單";
-  }
-
-  function toggleCart() {
-    document.getElementById('cart-sidebar').classList.toggle('translate-x-full');
-    document.getElementById('overlay').classList.toggle('hidden');
-  }
-
-  function filterMenu(c) {
-    document.querySelectorAll('.category-btn').forEach(b => {
-      b.classList.toggle('active', b.innerText === c || (c==='all' && b.innerText==='全部'));
-    });
-    displayMenu(c);
-  }
-
-  window.onload = () => {
-    TABLE_NO = new URLSearchParams(window.location.search).get('table') || "";
-    document.getElementById('table-no').innerText = TABLE_NO || "待測";
-    fetchConfig();
-    fetchMenu();
-  };
+async function postData(payload){const res=await fetch(GAS_API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});return await res.json();}
+async function fetchConfig(){try{const res=await fetch(`${GAS_API_URL}?action=getConfig`);const result=await res.json();if(result.ok){document.getElementById('marquee-info').innerText=result.marqueeText||"歡迎光臨好漁日！";}}catch(e){document.getElementById('marquee-info').innerText="今日招牌：酥脆蛋餅、法式吐司，開啟活力的一天！";}}
+async function fetchMenu(){try{const res=await fetch(`${GAS_API_URL}?action=getMenu`);const result=await res.json();if(result.ok){menuData=result.data;renderCats();displayMenu('all');document.getElementById('loading-spinner').style.display='none';}}catch(e){document.getElementById('loading-spinner').innerHTML="菜單載入失敗，請確認網路連接";}}
+function renderCats(){const nav=document.getElementById('category-nav');const cats=[...new Set(menuData.map(i=>i.category))];cats.forEach(c=>{const b=document.createElement('button');b.className="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm";b.innerText=c;b.onclick=()=>filterMenu(c);nav.appendChild(b);});}
+function displayMenu(f){const container=document.getElementById('menu-container');container.innerHTML='';const items=f==='all'?menuData:menuData.filter(i=>i.category===f);items.forEach((i)=>{const cartItem=cart.find(c=>c.name===i.name);const qty=cartItem?cartItem.qty:0;const card=document.createElement('div');card.className="glass-card rounded-xl shadow-sm border p-4 flex justify-between items-center text-blue-900";card.innerHTML=`<div class="flex-grow"><span class="text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded">${i.category}</span><h3 class="font-bold mt-1 text-lg">${i.name}</h3><p class="text-xs text-gray-600">${i.desc}</p><p class="text-red-600 font-bold mt-2 text-lg">$${i.price}</p></div><div class="flex items-center gap-3 bg-gray-100 p-1.5 rounded-full border border-gray-200"><button onclick="removeFromCart(this,'${i.name}')" class="bg-white text-gray-700 w-8 h-8 rounded-full shadow-sm flex items-center justify-center hover:bg-gray-200 active:scale-90 transition">-</button><span class="qty-display font-bold min-w-[20px] text-center text-lg">${qty}</span><button onclick="addToCart(this,'${i.name}')" class="bg-red-600 text-white w-8 h-8 rounded-full shadow-sm flex items-center justify-center hover:bg-red-700 active:scale-90 transition">+</button></div>`;container.appendChild(card);});}
+function addToCart(btn,itemName){const itemInfo=menuData.find(m=>m.name===itemName);let cartItem=cart.find(c=>c.name===itemName);if(cartItem){cartItem.qty++;}else{cartItem={...itemInfo,qty:1};cart.push(cartItem);}btn.parentElement.querySelector('.qty-display').innerText=cartItem.qty;updateUI();}
+function removeFromCart(btn,itemName){const cartIdx=cart.findIndex(c=>c.name===itemName);let finalQty=0;if(cartIdx>-1){cart[cartIdx].qty--;finalQty=cart[cartIdx].qty;if(cart[cartIdx].qty<=0){cart.splice(cartIdx,1);}}btn.parentElement.querySelector('.qty-display').innerText=finalQty;updateUI();}
+function updateUI(){const list=document.getElementById('cart-items');list.innerHTML=cart.length?'':'<p class="text-gray-500 text-center py-10">購物車目前是空的</p>';let total=0,count=0;cart.forEach(c=>{total+=c.price*c.qty;count+=c.qty;list.innerHTML+=`<div class="flex justify-between items-center text-sm border-b pb-2 mb-2"><div><div class="font-bold text-gray-800">${c.name}</div><div class="text-gray-500">$${c.price} x ${c.qty}</div></div><span class="font-bold text-red-600 text-base">$${c.price*c.qty}</span></div>`;});document.getElementById('cart-count').innerText=count;document.getElementById('total-price').innerText=`$${total}`;}
+function toggleCart(){document.getElementById('cart-sidebar').classList.toggle('translate-x-full');document.getElementById('overlay').classList.toggle('hidden');}
+function filterMenu(c){document.querySelectorAll('.category-btn').forEach(b=>{b.classList.toggle('active',b.innerText===c||(c==='all'&&b.innerText==='全部'));});displayMenu(c);}
+window.onload=()=>{TABLE_NO=new URLSearchParams(window.location.search).get('table')||"";document.getElementById('table-no').innerText=TABLE_NO||"待測";fetchConfig();fetchMenu();}
 </script>
-
 </body>
 </html>
